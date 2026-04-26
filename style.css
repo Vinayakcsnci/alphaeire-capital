@@ -60,7 +60,7 @@ header {
 
 /* LIVE CONTROLS */
 .live-controls {
-  background: #111;
+  background: var(--dark);
   border-bottom: 1px solid var(--border);
   padding: 12px 32px;
 }
@@ -119,6 +119,9 @@ header {
 
 /* AGENT CARDS */
 .agent-card {
+  appearance: none;
+  font: inherit;
+  color: var(--text);
   background: var(--card-bg);
   border: 2px solid var(--border);
   border-radius: 12px;
@@ -164,7 +167,7 @@ header {
 .output-header {
   padding: 14px 20px;
   border-bottom: 1px solid var(--border);
-  background: #0d1117;
+  background: var(--dark);
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--green);
@@ -193,6 +196,16 @@ header {
   font-size: 0.75rem;
   color: var(--muted);
   margin-bottom: 12px;
+}
+
+/* ACCESSIBILITY */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
 }
 
 /* FOOTER */
