@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.env
+brief_extracted.txt
+CEAI_CA_project_brief_2026.docx
