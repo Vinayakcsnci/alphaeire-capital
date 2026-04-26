@@ -85,6 +85,8 @@ function escapeAttr(str) {
 }
 
 // ─── LIVE MODE ───────────────────────────────────────────────────────────────
+// Note: API key is stored in the DOM input for the session. This is intentional
+// and within-scope for this demo; not suitable for production use.
 
 const SYSTEM_PROMPTS = {
   researcher: "You are Aoife, a senior equity analyst at AlphaEire Capital, an Irish investment firm focused on ISEQ-listed stocks. Your role is to analyse current Irish market conditions, identify 3-5 stocks showing strong signals (momentum, undervaluation, or volatility opportunity), and produce a structured research brief. For each stock provide: ticker, sector, current signal type, key rationale (2-3 sentences), and a risk flag. Close with an overall Irish market outlook paragraph. Be precise, data-informed, and professional. Use realistic ISEQ tickers such as CRH.L, BIRG.I, AIB.I, RYA.I, KRZ.I, DCC.L.",
@@ -99,7 +101,7 @@ const SYSTEM_PROMPTS = {
 };
 
 const USER_PROMPTS = {
-  researcher: () => "Analyse the current Irish stock market (ISEQ). Identify 3-5 stocks with strong signals and produce your full research brief now.",
+  researcher: (_ctx) => "Analyse the current Irish stock market (ISEQ). Identify 3-5 stocks with strong signals and produce your full research brief now.",
   designer: (ctx) => "Here is the research brief from our equity analyst:\n\n--- RESEARCH BRIEF ---\n" + ctx.researcher + "\n\nNow produce your full design specification for the stock monitoring dashboard.",
   maker: (ctx) => "Here is the context from our analyst and designer:\n\n--- RESEARCH BRIEF ---\n" + ctx.researcher + "\n\n--- DESIGN SPECIFICATION ---\n" + ctx.designer + "\n\nNow build the complete self-contained HTML dashboard. Output only the HTML.",
   communicator: (ctx) => "Here is the context from our analyst and developer:\n\n--- RESEARCH BRIEF ---\n" + ctx.researcher + "\n\n--- DASHBOARD BUILT ---\nA working HTML/JS dashboard has been built. Key features: stock signal cards, Chart.js line chart, alert panel.\n\nNow produce the investor alert email and two LinkedIn posts.",
@@ -127,15 +129,21 @@ async function callClaude(apiKey, systemPrompt, userMessage) {
     throw new Error(err.error?.message || 'API error ' + response.status);
   }
   const data = await response.json();
-  return data.content[0].text;
+  const block = data.content && data.content[0];
+  if (!block || block.type !== 'text') throw new Error('Unexpected API response shape');
+  return block.text;
 }
 
+let pipelineRunning = false;
+
 async function runLivePipeline() {
+  if (pipelineRunning) return;
   const apiKey = document.getElementById('api-key-input').value.trim();
   if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
 
   const runBtn = document.getElementById('run-btn');
   const statusEl = document.getElementById('live-status');
+  pipelineRunning = true;
   runBtn.disabled = true;
   liveOutputs = {};
   AGENT_KEYS.forEach(k => setBadge(k, 'ready'));
@@ -157,11 +165,15 @@ async function runLivePipeline() {
       setBadge(key, 'error');
       statusEl.textContent = 'Error on ' + AGENT_LABELS[key] + ': ' + e.message;
       runBtn.disabled = false;
+      pipelineRunning = false;
       return;
     }
   }
 
   statusEl.textContent = 'Pipeline complete! Click any agent to view its output.';
   runBtn.disabled = false;
+  pipelineRunning = false;
+  // Switch to live mode before final select so manager output is shown
+  if (currentMode !== 'live') switchMode('live');
   selectAgent('manager');
 }
