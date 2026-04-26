@@ -121,14 +121,18 @@ const USER_PROMPTS = {
   manager: (ctx) => "Here is the full pipeline output from your team:\n\n--- RESEARCH BRIEF (Aoife) ---\n" + ctx.researcher + "\n\n--- DESIGN SPECIFICATION (Ciarán) ---\n" + ctx.designer + "\n\n--- WORKING PROTOTYPE (Siobhán) ---\nSelf-contained HTML dashboard with Chart.js, stock signal cards, alert panel.\n\n--- INVESTOR COMMUNICATIONS (Declan) ---\n" + ctx.communicator + "\n\nNow produce your executive summary, 90-day operational plan, and risk & compliance section."
 };
 
-// Maker needs much more token budget — a full HTML dashboard is 5000–8000 tokens
+// Per-agent token budgets. Groq free tier is capped at 12k TPM so Maker is reduced.
 const AGENT_MAX_TOKENS = {
-  researcher:   2000,
-  designer:     2500,
-  maker:        8000,
-  communicator: 2000,
-  manager:      3000,
+  anthropic: { researcher: 2000, designer: 2500, maker: 8000, communicator: 2000, manager: 3000 },
+  openai:    { researcher: 2000, designer: 2500, maker: 8000, communicator: 2000, manager: 3000 },
+  groq:      { researcher: 1200, designer: 1500, maker: 3500, communicator: 1200, manager: 2000 },
 };
+
+function getMaxTokens(provider, agentKey) {
+  return (AGENT_MAX_TOKENS[provider] || AGENT_MAX_TOKENS.anthropic)[agentKey] || 2000;
+}
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const PROVIDER_CONFIG = {
   anthropic: { label: 'Claude claude-opus-4-7',  placeholder: 'Paste your Anthropic API key (sk-ant-...)...' },
@@ -172,7 +176,7 @@ async function callClaude(apiKey, systemPrompt, userMessage, maxTokens) {
   return block.text;
 }
 
-async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage, maxTokens) {
+async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage, maxTokens, _retry = false) {
   const baseUrl = provider === 'groq'
     ? 'https://api.groq.com/openai/v1'
     : 'https://api.openai.com/v1';
@@ -192,6 +196,18 @@ async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage, max
       ],
     }),
   });
+
+  if (response.status === 429 && !_retry) {
+    const err = await response.json().catch(() => ({}));
+    const msg = err.error?.message || '';
+    const match = msg.match(/try again in (\d+(?:\.\d+)?)s/i);
+    const waitMs = match ? Math.ceil(parseFloat(match[1]) * 1000) + 500 : 6000;
+    const statusEl = document.getElementById('live-status');
+    if (statusEl) statusEl.textContent = 'Rate limit — retrying in ' + Math.ceil(waitMs / 1000) + 's…';
+    await sleep(waitMs);
+    return callOpenAICompat(provider, apiKey, systemPrompt, userMessage, maxTokens, true);
+  }
+
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     throw new Error(err.error?.message || provider + ' API error ' + response.status);
@@ -234,7 +250,7 @@ async function runLivePipeline() {
     if (selectedAgent === key) selectAgent(key);
     try {
       const userMsg = USER_PROMPTS[key](ctx);
-      const maxTokens = AGENT_MAX_TOKENS[key] || 3000;
+      const maxTokens = getMaxTokens(provider, key);
       let output = await callLLM(provider, apiKey, SYSTEM_PROMPTS[key], userMsg, maxTokens);
       if (key === 'maker') output = extractHtml(output);
       ctx[key] = output;
