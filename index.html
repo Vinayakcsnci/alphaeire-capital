@@ -3,108 +3,201 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AlphaEire Capital — Agentic Investment Pipeline</title>
+  <title>AlphaEire Capital — AI Investment Intelligence</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="landing.css" />
 </head>
-<body>
+<body class="landing-body">
 
-  <!-- HEADER -->
-  <header>
-    <div class="header-inner">
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-inner">
       <div class="brand">
         <span class="brand-icon" aria-hidden="true">⬡</span>
         <div>
-          <h1>AlphaEire Capital</h1>
-          <p class="tagline">AI-Powered Irish Market Intelligence Pipeline</p>
+          <span class="brand-name">AlphaEire Capital</span>
+          <span class="brand-sub">AI Investment Intelligence</span>
         </div>
       </div>
-      <div class="mode-toggle" role="group" aria-label="View mode">
-        <button id="btn-demo" class="mode-btn active" onclick="switchMode('demo')">Demo Mode</button>
-        <button id="btn-live" class="mode-btn" onclick="switchMode('live')">Live Mode</button>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link active">Home</a>
+        <a href="agents.html" class="nav-link">Agent Pipeline</a>
       </div>
     </div>
-  </header>
+  </nav>
 
-  <!-- LIVE MODE CONTROLS -->
-  <div id="live-controls" class="live-controls hidden">
-    <div class="live-inner">
-      <label for="api-key-input" class="sr-only">Anthropic API key</label>
-      <input id="api-key-input" type="password" placeholder="Paste your Anthropic API key..." />
-      <button id="run-btn" onclick="runLivePipeline()">&#9654; Run Full Pipeline</button>
-      <span id="live-status" class="live-status"></span>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">🇮🇪 ISEQ Market Intelligence</div>
+      <h1 class="hero-title">Ireland's Agentic<br><span class="hero-accent">Investment Platform</span></h1>
+      <p class="hero-desc">Five specialised AI agents collaborate to research Irish stocks, design dashboards, build prototypes, craft investor communications, and produce executive strategy — all in one automated pipeline.</p>
+      <div class="hero-cta">
+        <a href="agents.html" class="btn-primary">Launch Agent Pipeline →</a>
+        <a href="#how-it-works" class="btn-ghost">How it works</a>
+      </div>
     </div>
-  </div>
 
-  <!-- PIPELINE BAR -->
-  <section class="pipeline-section">
-    <div class="pipeline-bar">
-
-      <button class="agent-card" id="card-researcher" onclick="selectAgent('researcher')">
-        <div class="agent-icon">🔍</div>
-        <div class="agent-name">Aoife</div>
-        <div class="agent-role">Researcher</div>
-        <div class="status-badge" id="badge-researcher">Ready</div>
-      </button>
-
-      <div class="arrow" aria-hidden="true">→</div>
-
-      <button class="agent-card" id="card-designer" onclick="selectAgent('designer')">
-        <div class="agent-icon">🎨</div>
-        <div class="agent-name">Ciarán</div>
-        <div class="agent-role">Designer</div>
-        <div class="status-badge" id="badge-designer">Ready</div>
-      </button>
-
-      <div class="arrow" aria-hidden="true">→</div>
-
-      <button class="agent-card" id="card-maker" onclick="selectAgent('maker')">
-        <div class="agent-icon">⚙️</div>
-        <div class="agent-name">Siobhán</div>
-        <div class="agent-role">Maker</div>
-        <div class="status-badge" id="badge-maker">Ready</div>
-      </button>
-
-      <div class="arrow" aria-hidden="true">→</div>
-
-      <button class="agent-card" id="card-communicator" onclick="selectAgent('communicator')">
-        <div class="agent-icon">📢</div>
-        <div class="agent-name">Declan</div>
-        <div class="agent-role">Communicator</div>
-        <div class="status-badge" id="badge-communicator">Ready</div>
-      </button>
-
-      <div class="arrow" aria-hidden="true">→</div>
-
-      <button class="agent-card" id="card-manager" onclick="selectAgent('manager')">
-        <div class="agent-icon">👔</div>
-        <div class="agent-name">Margaret</div>
-        <div class="agent-role">Manager</div>
-        <div class="status-badge" id="badge-manager">Ready</div>
-      </button>
-
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-num">5</span><span class="stat-label">AI Agents</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span class="stat-num">3</span><span class="stat-label">AI Providers</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span class="stat-num">ISEQ</span><span class="stat-label">Market Focus</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span class="stat-num">Live</span><span class="stat-label">Real-time Pipeline</span></div>
     </div>
   </section>
 
-  <!-- OUTPUT PANEL -->
-  <main>
-    <section class="output-section">
-      <div class="output-panel">
-        <div class="output-header">
-          <span id="output-title">Select an agent above to view its output</span>
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how-it-works">
+    <div class="section-inner">
+      <h2 class="section-title">How the Pipeline Works</h2>
+      <p class="section-sub">Each agent's output becomes the next agent's input — an unbroken chain of intelligence.</p>
+
+      <div class="pipeline-steps">
+        <div class="step">
+          <div class="step-icon">🔍</div>
+          <div class="step-arrow">→</div>
+          <div class="step-content">
+            <div class="step-num">01</div>
+            <div class="step-name">Researcher</div>
+            <div class="step-agent">Aoife</div>
+            <div class="step-desc">Scans ISEQ stocks, identifies BUY/WATCH/ALERT signals with rationale</div>
+          </div>
         </div>
-        <div id="output-body" class="output-body">
-          <p class="placeholder-text">Click any agent card in the pipeline above to see what it produced.</p>
+        <div class="step">
+          <div class="step-icon">🎨</div>
+          <div class="step-arrow">→</div>
+          <div class="step-content">
+            <div class="step-num">02</div>
+            <div class="step-name">Designer</div>
+            <div class="step-agent">Ciarán</div>
+            <div class="step-desc">Designs monitoring dashboard and alert rules from research brief</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-icon">⚙️</div>
+          <div class="step-arrow">→</div>
+          <div class="step-content">
+            <div class="step-num">03</div>
+            <div class="step-name">Maker</div>
+            <div class="step-agent">Siobhán</div>
+            <div class="step-desc">Builds a working HTML/JS stock dashboard from the design spec</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-icon">📢</div>
+          <div class="step-arrow">→</div>
+          <div class="step-content">
+            <div class="step-num">04</div>
+            <div class="step-name">Communicator</div>
+            <div class="step-agent">Declan</div>
+            <div class="step-desc">Writes investor alert emails and LinkedIn campaigns</div>
+          </div>
+        </div>
+        <div class="step last">
+          <div class="step-icon">👔</div>
+          <div class="step-content">
+            <div class="step-num">05</div>
+            <div class="step-name">Manager</div>
+            <div class="step-agent">Margaret</div>
+            <div class="step-desc">Reviews all outputs, produces executive summary and 90-day plan</div>
+          </div>
         </div>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
+
+  <!-- AGENT CARDS -->
+  <section class="section section-dark">
+    <div class="section-inner">
+      <h2 class="section-title">Meet the Agents</h2>
+      <p class="section-sub">Five specialists, each with distinct expertise, personality, and domain knowledge.</p>
+
+      <div class="agent-grid">
+        <div class="agent-feature-card">
+          <div class="afc-icon">🔍</div>
+          <div class="afc-role">Researcher</div>
+          <div class="afc-name">Aoife</div>
+          <div class="afc-desc">Senior equity analyst. Identifies momentum, undervaluation, and volatility opportunities across ISEQ-listed stocks.</div>
+          <div class="afc-output">→ Research brief + stock picks</div>
+        </div>
+        <div class="agent-feature-card">
+          <div class="afc-icon">🎨</div>
+          <div class="afc-role">Designer</div>
+          <div class="afc-name">Ciarán</div>
+          <div class="afc-desc">Product designer. Translates research findings into dashboard layouts, alert trigger rules, and UX specifications.</div>
+          <div class="afc-output">→ Design specification</div>
+        </div>
+        <div class="agent-feature-card">
+          <div class="afc-icon">⚙️</div>
+          <div class="afc-role">Maker</div>
+          <div class="afc-name">Siobhán</div>
+          <div class="afc-desc">Full-stack developer. Turns the design spec into a self-contained, working HTML dashboard with Chart.js visualisations.</div>
+          <div class="afc-output">→ Working prototype</div>
+        </div>
+        <div class="agent-feature-card">
+          <div class="afc-icon">📢</div>
+          <div class="afc-role">Communicator</div>
+          <div class="afc-name">Declan</div>
+          <div class="afc-desc">Head of investor relations. Crafts professional alert emails and LinkedIn posts for retail and institutional audiences.</div>
+          <div class="afc-output">→ Marketing materials</div>
+        </div>
+        <div class="agent-feature-card">
+          <div class="afc-icon">👔</div>
+          <div class="afc-role">Manager</div>
+          <div class="afc-name">Margaret</div>
+          <div class="afc-desc">Chief Investment Officer. Reviews all pipeline outputs, assesses strategic alignment, and produces the executive plan.</div>
+          <div class="afc-output">→ Executive report</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD PREVIEW -->
+  <section class="section">
+    <div class="section-inner">
+      <h2 class="section-title">Live Dashboard Preview</h2>
+      <p class="section-sub">This is the actual output Siobhán (Maker agent) produced — a working ISEQ stock monitoring dashboard.</p>
+      <div class="dashboard-preview">
+        <div class="preview-label">Maker Agent Output — Interactive Dashboard</div>
+        <iframe
+          id="dashboard-frame"
+          class="dashboard-frame"
+          sandbox="allow-scripts"
+          title="ISEQ Stock Monitoring Dashboard"
+          src="about:blank">
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section section-cta">
+    <div class="section-inner cta-inner">
+      <h2 class="cta-title">Run the Pipeline with Your AI Key</h2>
+      <p class="cta-desc">Supports Anthropic Claude, OpenAI GPT-4o, and xAI Grok. Watch five agents collaborate live.</p>
+      <a href="agents.html" class="btn-primary btn-large">Open Agent Pipeline →</a>
+    </div>
+  </section>
 
   <!-- FOOTER -->
-  <footer>
+  <footer class="footer">
     <p>AlphaEire Capital &middot; Agentic Investment Pipeline &middot; Built with Claude (claude-opus-4-7) &middot; ISEQ Market Intelligence</p>
+    <p style="margin-top:6px"><a href="https://github.com/Vinayakcsnci/alphaeire-capital" target="_blank" rel="noopener" style="color:var(--green)">GitHub Repository</a></p>
   </footer>
 
   <script src="demo_data.js"></script>
-  <script src="app.js"></script>
+  <script>
+    // Render the Maker's dashboard in the preview iframe
+    document.addEventListener('DOMContentLoaded', () => {
+      const frame = document.getElementById('dashboard-frame');
+      if (DEMO_DATA && DEMO_DATA.maker) {
+        frame.srcdoc = DEMO_DATA.maker;
+      }
+    });
+  </script>
 </body>
 </html>
