@@ -87,12 +87,15 @@ def run_agent(agent_key: str, user_message: str) -> str:
     print(f"\n{'='*60}")
     print(f"Running: {agent['label']}")
     print(f"{'='*60}")
-    response = client.messages.create(
-        model="claude-opus-4-7",
-        max_tokens=3000,
-        system=agent["system"],
-        messages=[{"role": "user", "content": user_message}],
-    )
+    try:
+        response = client.messages.create(
+            model="claude-opus-4-7",
+            max_tokens=3000,
+            system=agent["system"],
+            messages=[{"role": "user", "content": user_message}],
+        )
+    except Exception as e:
+        sys.exit(f"Agent '{agent_key}' ({agent['label']}) failed: {e}")
     output = response.content[0].text
     print(output[:300] + "..." if len(output) > 300 else output)
     return output
