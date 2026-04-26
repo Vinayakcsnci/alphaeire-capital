@@ -86,6 +86,17 @@ function escapeAttr(str) {
     .replace(/>/g, '&gt;');
 }
 
+// Strip markdown code fences if the model wraps output despite instructions
+function extractHtml(text) {
+  const t = (text || '').trim();
+  const fenced = t.match(/^```(?:html)?\s*([\s\S]*?)```\s*$/i);
+  if (fenced) return fenced[1].trim();
+  // If it doesn't start with <, try to find the doctype
+  const idx = t.indexOf('<!DOCTYPE');
+  if (idx > 0) return t.slice(idx);
+  return t;
+}
+
 // ─── LIVE MODE ───────────────────────────────────────────────────────────────
 // Note: API key is stored in the DOM input for the session. This is intentional
 // and within-scope for this demo; not suitable for production use.
@@ -105,9 +116,18 @@ const SYSTEM_PROMPTS = {
 const USER_PROMPTS = {
   researcher: (_ctx) => "Analyse the current Irish stock market (ISEQ). Identify 3-5 stocks with strong signals and produce your full research brief now.",
   designer: (ctx) => "Here is the research brief from our equity analyst:\n\n--- RESEARCH BRIEF ---\n" + ctx.researcher + "\n\nNow produce your full design specification for the stock monitoring dashboard.",
-  maker: (ctx) => "Here is the context from our analyst and designer:\n\n--- RESEARCH BRIEF ---\n" + ctx.researcher + "\n\n--- DESIGN SPECIFICATION ---\n" + ctx.designer + "\n\nNow build the complete self-contained HTML dashboard. Output only the HTML.",
+  maker: (ctx) => "Here is the context from our analyst and designer:\n\n--- RESEARCH BRIEF ---\n" + ctx.researcher + "\n\n--- DESIGN SPECIFICATION ---\n" + ctx.designer + "\n\nNow build the complete self-contained HTML dashboard. Output only the raw HTML — start your response with <!DOCTYPE html> and end with </html>. No markdown fences, no explanation.",
   communicator: (ctx) => "Here is the context from our analyst and developer:\n\n--- RESEARCH BRIEF ---\n" + ctx.researcher + "\n\n--- DASHBOARD BUILT ---\nA working HTML/JS dashboard has been built. Key features: stock signal cards, Chart.js line chart, alert panel.\n\nNow produce the investor alert email and two LinkedIn posts.",
   manager: (ctx) => "Here is the full pipeline output from your team:\n\n--- RESEARCH BRIEF (Aoife) ---\n" + ctx.researcher + "\n\n--- DESIGN SPECIFICATION (Ciarán) ---\n" + ctx.designer + "\n\n--- WORKING PROTOTYPE (Siobhán) ---\nSelf-contained HTML dashboard with Chart.js, stock signal cards, alert panel.\n\n--- INVESTOR COMMUNICATIONS (Declan) ---\n" + ctx.communicator + "\n\nNow produce your executive summary, 90-day operational plan, and risk & compliance section."
+};
+
+// Maker needs much more token budget — a full HTML dashboard is 5000–8000 tokens
+const AGENT_MAX_TOKENS = {
+  researcher:   2000,
+  designer:     2500,
+  maker:        8000,
+  communicator: 2000,
+  manager:      3000,
 };
 
 const PROVIDER_CONFIG = {
@@ -126,7 +146,7 @@ function getSelectedProvider() {
   return el ? el.value : 'anthropic';
 }
 
-async function callClaude(apiKey, systemPrompt, userMessage) {
+async function callClaude(apiKey, systemPrompt, userMessage, maxTokens) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -137,22 +157,22 @@ async function callClaude(apiKey, systemPrompt, userMessage) {
     },
     body: JSON.stringify({
       model: 'claude-opus-4-7',
-      max_tokens: 3000,
+      max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
     }),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.error?.message || 'API error ' + response.status);
+    throw new Error(err.error?.message || 'Anthropic API error ' + response.status);
   }
   const data = await response.json();
   const block = data.content && data.content[0];
-  if (!block || block.type !== 'text') throw new Error('Unexpected API response shape');
+  if (!block || block.type !== 'text') throw new Error('Unexpected Anthropic response shape');
   return block.text;
 }
 
-async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage) {
+async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage, maxTokens) {
   const baseUrl = provider === 'groq'
     ? 'https://api.groq.com/openai/v1'
     : 'https://api.openai.com/v1';
@@ -165,7 +185,7 @@ async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage) {
     },
     body: JSON.stringify({
       model,
-      max_tokens: 3000,
+      max_tokens: maxTokens,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
@@ -174,18 +194,19 @@ async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage) {
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.error?.message || 'API error ' + response.status);
+    throw new Error(err.error?.message || provider + ' API error ' + response.status);
   }
   const data = await response.json();
   const choice = data.choices && data.choices[0];
-  if (!choice || !choice.message) throw new Error('Unexpected API response shape');
+  if (!choice || !choice.message || choice.message.content == null)
+    throw new Error('Unexpected ' + provider + ' response shape');
   return choice.message.content;
 }
 
-async function callLLM(provider, apiKey, systemPrompt, userMessage) {
+async function callLLM(provider, apiKey, systemPrompt, userMessage, maxTokens) {
   return provider === 'anthropic'
-    ? callClaude(apiKey, systemPrompt, userMessage)
-    : callOpenAICompat(provider, apiKey, systemPrompt, userMessage);
+    ? callClaude(apiKey, systemPrompt, userMessage, maxTokens)
+    : callOpenAICompat(provider, apiKey, systemPrompt, userMessage, maxTokens);
 }
 
 let pipelineRunning = false;
@@ -213,7 +234,9 @@ async function runLivePipeline() {
     if (selectedAgent === key) selectAgent(key);
     try {
       const userMsg = USER_PROMPTS[key](ctx);
-      const output = await callLLM(provider, apiKey, SYSTEM_PROMPTS[key], userMsg);
+      const maxTokens = AGENT_MAX_TOKENS[key] || 3000;
+      let output = await callLLM(provider, apiKey, SYSTEM_PROMPTS[key], userMsg, maxTokens);
+      if (key === 'maker') output = extractHtml(output);
       ctx[key] = output;
       liveOutputs[key] = output;
       setBadge(key, 'done');
