@@ -110,6 +110,22 @@ const USER_PROMPTS = {
   manager: (ctx) => "Here is the full pipeline output from your team:\n\n--- RESEARCH BRIEF (Aoife) ---\n" + ctx.researcher + "\n\n--- DESIGN SPECIFICATION (Ciarán) ---\n" + ctx.designer + "\n\n--- WORKING PROTOTYPE (Siobhán) ---\nSelf-contained HTML dashboard with Chart.js, stock signal cards, alert panel.\n\n--- INVESTOR COMMUNICATIONS (Declan) ---\n" + ctx.communicator + "\n\nNow produce your executive summary, 90-day operational plan, and risk & compliance section."
 };
 
+const PROVIDER_CONFIG = {
+  anthropic: { label: 'Claude claude-opus-4-7',  placeholder: 'Paste your Anthropic API key (sk-ant-...)...' },
+  openai:    { label: 'GPT-4o (OpenAI)',    placeholder: 'Paste your OpenAI API key (sk-...)...' },
+  groq:      { label: 'Llama 3.3 70B (Groq)', placeholder: 'Paste your Groq API key (gsk_...)...' },
+};
+
+function updateKeyPlaceholder(provider) {
+  const input = document.getElementById('api-key-input');
+  if (input) input.placeholder = PROVIDER_CONFIG[provider]?.placeholder || 'Paste your API key...';
+}
+
+function getSelectedProvider() {
+  const el = document.querySelector('input[name="provider"]:checked');
+  return el ? el.value : 'anthropic';
+}
+
 async function callClaude(apiKey, systemPrompt, userMessage) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -136,12 +152,51 @@ async function callClaude(apiKey, systemPrompt, userMessage) {
   return block.text;
 }
 
+async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage) {
+  const baseUrl = provider === 'groq'
+    ? 'https://api.groq.com/openai/v1'
+    : 'https://api.openai.com/v1';
+  const model = provider === 'groq' ? 'llama-3.3-70b-versatile' : 'gpt-4o';
+  const response = await fetch(baseUrl + '/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey,
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 3000,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+    }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'API error ' + response.status);
+  }
+  const data = await response.json();
+  const choice = data.choices && data.choices[0];
+  if (!choice || !choice.message) throw new Error('Unexpected API response shape');
+  return choice.message.content;
+}
+
+async function callLLM(provider, apiKey, systemPrompt, userMessage) {
+  return provider === 'anthropic'
+    ? callClaude(apiKey, systemPrompt, userMessage)
+    : callOpenAICompat(provider, apiKey, systemPrompt, userMessage);
+}
+
 let pipelineRunning = false;
 
 async function runLivePipeline() {
   if (pipelineRunning) return;
   const apiKey = document.getElementById('api-key-input').value.trim();
-  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
+  if (!apiKey) { alert('Please enter your API key.'); return; }
+
+  const provider = getSelectedProvider();
+  const providerLabel = PROVIDER_CONFIG[provider]?.label || provider;
 
   const runBtn = document.getElementById('run-btn');
   const statusEl = document.getElementById('live-status');
@@ -154,11 +209,11 @@ async function runLivePipeline() {
 
   for (const key of AGENT_KEYS) {
     setBadge(key, 'running');
-    statusEl.textContent = 'Running ' + AGENT_LABELS[key] + '…';
+    statusEl.textContent = 'Running ' + AGENT_LABELS[key] + ' via ' + providerLabel + '…';
     if (selectedAgent === key) selectAgent(key);
     try {
       const userMsg = USER_PROMPTS[key](ctx);
-      const output = await callClaude(apiKey, SYSTEM_PROMPTS[key], userMsg);
+      const output = await callLLM(provider, apiKey, SYSTEM_PROMPTS[key], userMsg);
       ctx[key] = output;
       liveOutputs[key] = output;
       setBadge(key, 'done');
@@ -172,10 +227,9 @@ async function runLivePipeline() {
     }
   }
 
-  statusEl.textContent = 'Pipeline complete! Click any agent to view its output.';
+  statusEl.textContent = 'Pipeline complete via ' + providerLabel + '! Click any agent to view its output.';
   runBtn.disabled = false;
   pipelineRunning = false;
-  // Switch to live mode before final select so manager output is shown
   if (currentMode !== 'live') switchMode('live');
   selectAgent('manager');
 }

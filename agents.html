@@ -31,8 +31,22 @@
   <!-- LIVE MODE CONTROLS -->
   <div id="live-controls" class="live-controls hidden">
     <div class="live-inner">
-      <label for="api-key-input" class="sr-only">Anthropic API key</label>
-      <input id="api-key-input" type="password" placeholder="Paste your Anthropic API key..." />
+      <div class="provider-select" role="group" aria-label="AI Provider">
+        <label class="provider-opt">
+          <input type="radio" name="provider" value="anthropic" checked onchange="updateKeyPlaceholder(this.value)">
+          <span>Claude (Anthropic)</span>
+        </label>
+        <label class="provider-opt">
+          <input type="radio" name="provider" value="openai" onchange="updateKeyPlaceholder(this.value)">
+          <span>GPT-4o (OpenAI)</span>
+        </label>
+        <label class="provider-opt">
+          <input type="radio" name="provider" value="groq" onchange="updateKeyPlaceholder(this.value)">
+          <span>Llama 3.3 (Groq)</span>
+        </label>
+      </div>
+      <label for="api-key-input" class="sr-only">API key</label>
+      <input id="api-key-input" type="password" placeholder="Paste your Anthropic API key (sk-ant-...)..." />
       <button id="run-btn" onclick="runLivePipeline()">&#9654; Run Full Pipeline</button>
       <span id="live-status" class="live-status"></span>
     </div>

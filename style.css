@@ -97,6 +97,26 @@ header {
 .live-status { font-size: 0.8rem; color: var(--muted); }
 .hidden { display: none !important; }
 
+/* PROVIDER SELECTOR */
+.provider-select {
+  display: flex;
+  gap: 14px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.provider-opt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.provider-opt input[type="radio"] { accent-color: var(--green); cursor: pointer; }
+.provider-opt:has(input:checked) { color: var(--text); font-weight: 600; }
+
 /* PIPELINE SECTION */
 .pipeline-section {
   padding: 32px;
