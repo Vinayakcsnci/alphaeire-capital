@@ -21,7 +21,7 @@ fetch('demo_outputs.json')
     // Auto-select researcher
     selectAgent('researcher');
   })
-  .catch(() => console.warn('demo_outputs.json not found — run pipeline.py first'));
+  .catch(err => console.warn('demo_outputs.json load failed:', err));
 
 function switchMode(mode) {
   currentMode = mode;
@@ -40,8 +40,9 @@ function switchMode(mode) {
 
 function selectAgent(key) {
   selectedAgent = key;
-  AGENT_KEYS.forEach(k => document.getElementById('card-' + k).classList.remove('selected'));
-  document.getElementById('card-' + key).classList.add('selected');
+  AGENT_KEYS.forEach(k => { const c = document.getElementById('card-' + k); if (c) c.classList.remove('selected'); });
+  const card = document.getElementById('card-' + key);
+  if (card) card.classList.add('selected');
 
   const outputs = currentMode === 'demo' ? demoOutputs : liveOutputs;
   const content = outputs[key];
@@ -59,7 +60,7 @@ function selectAgent(key) {
   if (key === 'maker') {
     body.innerHTML =
       '<p class="maker-note">Siobhán built a self-contained HTML dashboard. Rendered below:</p>' +
-      '<iframe class="maker-frame" srcdoc="' + escapeAttr(content) + '"></iframe>';
+      '<iframe class="maker-frame" sandbox="allow-scripts" srcdoc="' + escapeAttr(content) + '"></iframe>';
   } else {
     body.textContent = content;
   }
@@ -67,6 +68,7 @@ function selectAgent(key) {
 
 function setBadge(key, state) {
   const badge = document.getElementById('badge-' + key);
+  if (!badge) return;
   badge.className = 'status-badge';
   if (state === 'done') { badge.classList.add('done'); badge.textContent = 'Done'; }
   else if (state === 'running') { badge.classList.add('running'); badge.textContent = 'Running…'; }
