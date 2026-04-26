@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlphaEire Capital — Agentic Investment Pipeline</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">⬡</span>
+        <div>
+          <h1>AlphaEire Capital</h1>
+          <p class="tagline">AI-Powered Irish Market Intelligence Pipeline</p>
+        </div>
+      </div>
+      <div class="mode-toggle">
+        <button id="btn-demo" class="mode-btn active" onclick="switchMode('demo')">Demo Mode</button>
+        <button id="btn-live" class="mode-btn" onclick="switchMode('live')">Live Mode</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- LIVE MODE CONTROLS -->
+  <div id="live-controls" class="live-controls hidden">
+    <div class="live-inner">
+      <input id="api-key-input" type="password" placeholder="Paste your Anthropic API key..." />
+      <button id="run-btn" onclick="runLivePipeline()">&#9654; Run Full Pipeline</button>
+      <span id="live-status" class="live-status"></span>
+    </div>
+  </div>
+
+  <!-- PIPELINE BAR -->
+  <section class="pipeline-section">
+    <div class="pipeline-bar">
+
+      <div class="agent-card" id="card-researcher" onclick="selectAgent('researcher')">
+        <div class="agent-icon">🔍</div>
+        <div class="agent-name">Aoife</div>
+        <div class="agent-role">Researcher</div>
+        <div class="status-badge" id="badge-researcher">Ready</div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="agent-card" id="card-designer" onclick="selectAgent('designer')">
+        <div class="agent-icon">🎨</div>
+        <div class="agent-name">Ciarán</div>
+        <div class="agent-role">Designer</div>
+        <div class="status-badge" id="badge-designer">Ready</div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="agent-card" id="card-maker" onclick="selectAgent('maker')">
+        <div class="agent-icon">⚙️</div>
+        <div class="agent-name">Siobhán</div>
+        <div class="agent-role">Maker</div>
+        <div class="status-badge" id="badge-maker">Ready</div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="agent-card" id="card-communicator" onclick="selectAgent('communicator')">
+        <div class="agent-icon">📢</div>
+        <div class="agent-name">Declan</div>
+        <div class="agent-role">Communicator</div>
+        <div class="status-badge" id="badge-communicator">Ready</div>
+      </div>
+
+      <div class="arrow">→</div>
+
+      <div class="agent-card" id="card-manager" onclick="selectAgent('manager')">
+        <div class="agent-icon">👔</div>
+        <div class="agent-name">Margaret</div>
+        <div class="agent-role">Manager</div>
+        <div class="status-badge" id="badge-manager">Ready</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- OUTPUT PANEL -->
+  <section class="output-section">
+    <div class="output-panel">
+      <div class="output-header">
+        <span id="output-title">Select an agent above to view its output</span>
+      </div>
+      <div id="output-body" class="output-body">
+        <p class="placeholder-text">Click any agent card in the pipeline above to see what it produced.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>AlphaEire Capital &middot; Agentic Investment Pipeline &middot; Built with Claude claude-opus-4-7 &middot; ISEQ Market Intelligence</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
