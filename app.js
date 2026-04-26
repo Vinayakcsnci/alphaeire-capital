@@ -12,16 +12,18 @@ let liveOutputs = {};
 let currentMode = 'demo';
 let selectedAgent = null;
 
-// Load demo outputs on page load
-fetch('demo_outputs.json')
-  .then(r => r.json())
-  .then(data => {
-    demoOutputs = data;
-    AGENT_KEYS.forEach(key => setBadge(key, 'done'));
-    // Auto-select researcher
-    selectAgent('researcher');
-  })
-  .catch(err => console.warn('demo_outputs.json load failed:', err));
+// Load demo outputs — inline data from demo_data.js (works locally + on GitHub Pages)
+function initDemo() {
+  demoOutputs = DEMO_DATA;
+  AGENT_KEYS.forEach(key => setBadge(key, 'done'));
+  selectAgent('researcher');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initDemo);
+} else {
+  initDemo();
+}
 
 function switchMode(mode) {
   currentMode = mode;
