@@ -322,7 +322,7 @@ async function runLivePipeline() {
     statusEl.textContent = 'Running ' + AGENT_LABELS[key] + ' via ' + providerLabel + '…';
     if (selectedAgent === key) selectAgent(key);
     try {
-      const userMsg = USER_PROMPTS[key](ctx);
+      let userMsg = USER_PROMPTS[key](ctx);
       const maxTokens = getMaxTokens(provider, key);
       // Inject live Yahoo Finance data into Aoife's prompt
       if (key === 'researcher' && marketContext) {
