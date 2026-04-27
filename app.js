@@ -190,7 +190,7 @@ const USER_PROMPTS = {
 const AGENT_MAX_TOKENS = {
   anthropic: { researcher: 2000, designer: 2500, maker: 8000, communicator: 2000, manager: 3000 },
   openai:    { researcher: 2000, designer: 2500, maker: 8000, communicator: 2000, manager: 3000 },
-  groq:      { researcher: 1200, designer: 1500, maker: 3500, communicator: 1200, manager: 2000 },
+  groq:      { researcher: 1200, designer: 1500, maker: 3200, communicator: 1500, manager: 2000 },
 };
 
 function getMaxTokens(provider, agentKey) {
