@@ -241,7 +241,7 @@ async function callClaude(apiKey, systemPrompt, userMessage, maxTokens) {
   return block.text;
 }
 
-async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage, maxTokens, _retry = false) {
+async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage, maxTokens, _retries = 0) {
   const baseUrl = provider === 'groq'
     ? 'https://api.groq.com/openai/v1'
     : 'https://api.openai.com/v1';
@@ -262,15 +262,20 @@ async function callOpenAICompat(provider, apiKey, systemPrompt, userMessage, max
     }),
   });
 
-  if (response.status === 429 && !_retry) {
+  if (response.status === 429 && _retries < 4) {
     const err = await response.json().catch(() => ({}));
     const msg = err.error?.message || '';
     const match = msg.match(/try again in (\d+(?:\.\d+)?)s/i);
-    const waitMs = match ? Math.ceil(parseFloat(match[1]) * 1000) + 500 : 6000;
+    const waitSec = match
+      ? Math.ceil(parseFloat(match[1])) + 1
+      : Math.min(15 * (_retries + 1), 60);
     const statusEl = document.getElementById('live-status');
-    if (statusEl) statusEl.textContent = 'Rate limit — retrying in ' + Math.ceil(waitMs / 1000) + 's…';
-    await sleep(waitMs);
-    return callOpenAICompat(provider, apiKey, systemPrompt, userMessage, maxTokens, true);
+    for (let i = waitSec; i > 0; i--) {
+      if (statusEl) statusEl.textContent =
+        `Rate limit — retrying in ${i}s… (attempt ${_retries + 1}/4)`;
+      await sleep(1000);
+    }
+    return callOpenAICompat(provider, apiKey, systemPrompt, userMessage, maxTokens, _retries + 1);
   }
 
   if (!response.ok) {
