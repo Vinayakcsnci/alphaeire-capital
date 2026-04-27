@@ -99,7 +99,11 @@ function extractHtml(text) {
 
 // ─── YAHOO FINANCE LIVE DATA ─────────────────────────────────────────────────
 
-const ISEQ_SYMBOLS = ['^ISEQ', 'AIBG.I', 'BIRG.I', 'RYA.I', 'CRH.L', 'DCC.L', 'PTSB.I'];
+const ISEQ_SYMBOLS = [
+  '^ISEQ',
+  'KRX.IR', 'KRZ.IR', 'GL9.IR', 'IR5B.IR', 'EG7.IR',
+  'IRES.IR', 'OIZ.IR', 'HSW.IR', 'MIO.IR', 'MLC.IR', '8GW.IR',
+];
 
 async function fetchYahooMeta(symbol) {
   const enc = encodeURIComponent(symbol);
@@ -163,7 +167,7 @@ async function buildMarketContext(statusEl) {
 // and within-scope for this demo; not suitable for production use.
 
 const SYSTEM_PROMPTS = {
-  researcher: "You are Aoife, a senior equity analyst at AlphaEire Capital, an Irish investment firm focused on ISEQ-listed stocks. Live market data from Yahoo Finance will be provided at the top of the user message — treat it as ground truth for current prices and movements. Your role is to analyse this live ISEQ data, identify 3-5 stocks showing strong signals (momentum, undervaluation, or volatility opportunity), and produce a structured research brief. For each stock provide: ticker, sector, current price, signal type, key rationale (2-3 sentences grounded in the live data), and a risk flag. Close with an overall Irish market outlook paragraph. Be precise, data-driven, and professional.",
+  researcher: "You are Aoife, a senior equity analyst at AlphaEire Capital, an Irish investment firm focused on ISEQ-listed stocks. Live market data from Yahoo Finance will be provided at the top of the user message for ^ISEQ and these Euronext Dublin stocks: KRX.IR, KRZ.IR, GL9.IR, IR5B.IR, EG7.IR, IRES.IR, OIZ.IR, HSW.IR, MIO.IR, MLC.IR, 8GW.IR — treat it as ground truth for current prices and movements. Your role is to analyse this live ISEQ data, identify 3-5 stocks showing strong signals (momentum, undervaluation, or volatility opportunity), and produce a structured research brief. For each stock provide: ticker, company name, current price, signal type, key rationale (2-3 sentences grounded in the live data), and a risk flag. Close with an overall Irish market outlook paragraph referencing the ISEQ index level. Be precise, data-driven, and professional.",
 
   designer: "You are Ciarán, a product designer at AlphaEire Capital. You have received a research brief from our equity analyst team. Design a stock monitoring dashboard and real-time alert system for our portfolio managers. Produce a detailed design specification covering: (1) dashboard layout and key UI components with exact descriptions, (2) alert trigger rules for each stock signal type identified in the research, (3) data visualisation choices (chart types, colour coding, thresholds), (4) UX rationale for every major decision. Format your output as a structured design specification document with clear headings.",
 

@@ -139,7 +139,7 @@ add_para(doc, (
 set_heading(doc, 'Agent 1 — Aoife (Researcher)', 2)
 add_label_text(doc, 'Role', 'Senior Equity Analyst')
 add_label_text(doc, 'Produces', 'Structured research brief with 3–5 ISEQ stock picks grounded in live Yahoo Finance data: signal types, live-price rationale, risk flags, and market outlook')
-add_label_text(doc, 'Live Data', '^ISEQ, AIBG.I, BIRG.I, RYA.I, CRH.L, DCC.L, PTSB.I — fetched from Yahoo Finance before each pipeline run')
+add_label_text(doc, 'Live Data', '^ISEQ, KRX.IR, KRZ.IR, GL9.IR, IR5B.IR, EG7.IR, IRES.IR, OIZ.IR, HSW.IR, MIO.IR, MLC.IR, 8GW.IR — fetched from Yahoo Finance (Euronext Dublin) before each pipeline run')
 
 add_para(doc, 'System Prompt:', bold=True)
 add_para(doc, (

@@ -30,12 +30,14 @@ AGENTS = {
         "system": (
             "You are Aoife, a senior equity analyst at AlphaEire Capital, an Irish investment firm "
             "focused on ISEQ-listed stocks. Live market data from Yahoo Finance will be provided at "
-            "the top of the user message — treat it as ground truth for current prices and movements. "
+            "the top of the user message for ^ISEQ and these Euronext Dublin stocks: KRX.IR, KRZ.IR, "
+            "GL9.IR, IR5B.IR, EG7.IR, IRES.IR, OIZ.IR, HSW.IR, MIO.IR, MLC.IR, 8GW.IR — treat it "
+            "as ground truth for current prices and movements. "
             "Your role is to analyse this live ISEQ data, identify 3-5 stocks showing strong signals "
             "(momentum, undervaluation, or volatility opportunity), and produce a structured research "
-            "brief. For each stock provide: ticker, sector, current price, signal type, key rationale "
-            "(2-3 sentences grounded in the live data), and a risk flag. "
-            "Close with an overall Irish market outlook paragraph. "
+            "brief. For each stock provide: ticker, company name, current price, signal type, key "
+            "rationale (2-3 sentences grounded in the live data), and a risk flag. "
+            "Close with an overall Irish market outlook paragraph referencing the ISEQ index level. "
             "Be precise, data-driven, and professional."
         ),
     },
@@ -103,9 +105,20 @@ def fetch_iseq_market_data() -> str:
     if not YF_AVAILABLE:
         return "(yfinance not installed — run: pip install yfinance)"
 
-    symbols = [("^ISEQ", "ISEQ All Share Index"), ("AIBG.I", "AIB Group"),
-               ("BIRG.I", "Bank of Ireland"), ("RYA.I", "Ryanair"),
-               ("CRH.L", "CRH plc"), ("DCC.L", "DCC plc"), ("PTSB.I", "Permanent TSB")]
+    symbols = [
+        ("^ISEQ",   "ISEQ All Share Index"),
+        ("KRX.IR",  "KRX.IR"),
+        ("KRZ.IR",  "KRZ.IR"),
+        ("GL9.IR",  "GL9.IR"),
+        ("IR5B.IR", "IR5B.IR"),
+        ("EG7.IR",  "EG7.IR"),
+        ("IRES.IR", "IRES.IR"),
+        ("OIZ.IR",  "OIZ.IR"),
+        ("HSW.IR",  "HSW.IR"),
+        ("MIO.IR",  "MIO.IR"),
+        ("MLC.IR",  "MLC.IR"),
+        ("8GW.IR",  "8GW.IR"),
+    ]
     today = datetime.date.today().strftime("%d %b %Y")
     lines = [f"LIVE MARKET DATA — Yahoo Finance — {today}", ""]
 
