@@ -190,15 +190,28 @@ const USER_PROMPTS = {
   manager: (ctx) => "Here is the full pipeline output from your team:\n\n--- RESEARCH BRIEF (Aoife) ---\n" + ctx.researcher + "\n\n--- DESIGN SPECIFICATION (Ciarán) ---\n" + ctx.designer + "\n\n--- WORKING PROTOTYPE (Siobhán) ---\nSelf-contained HTML dashboard with Chart.js, stock signal cards, alert panel.\n\n--- INVESTOR COMMUNICATIONS (Declan) ---\n" + ctx.communicator + "\n\nNow produce your executive summary, 90-day operational plan, and risk & compliance section."
 };
 
-// Per-agent token budgets. Groq free tier is capped at 12k TPM so Maker is reduced.
+// Per-agent token budgets.
+// Groq free tier: 100k TPD total (input + output). Keep per-run total under ~12k.
+// Output budgets: 600+700+1600+550+750 = 4,200. Estimated input adds ~6k → ~10k per run.
 const AGENT_MAX_TOKENS = {
   anthropic: { researcher: 2000, designer: 2500, maker: 8000, communicator: 2000, manager: 3000 },
   openai:    { researcher: 2000, designer: 2500, maker: 8000, communicator: 2000, manager: 3000 },
-  groq:      { researcher: 1200, designer: 1500, maker: 3200, communicator: 1500, manager: 2000 },
+  groq:      { researcher: 600,  designer: 700,  maker: 1600, communicator: 550,  manager: 750  },
 };
 
 function getMaxTokens(provider, agentKey) {
   return (AGENT_MAX_TOKENS[provider] || AGENT_MAX_TOKENS.anthropic)[agentKey] || 2000;
+}
+
+// For Groq, cap each context value at 3 000 chars (~750 tokens) to keep input tokens low.
+function trimCtxForGroq(ctx) {
+  const LIMIT = 3000;
+  const out = {};
+  for (const k of Object.keys(ctx)) {
+    const v = ctx[k];
+    out[k] = v && v.length > LIMIT ? v.slice(0, LIMIT) + '\n[…truncated for token efficiency]' : v;
+  }
+  return out;
 }
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -339,7 +352,8 @@ async function runLivePipeline(_keyOverride) {
     statusEl.textContent = 'Running ' + AGENT_LABELS[key] + ' via ' + providerLabel + '…';
     if (selectedAgent === key) selectAgent(key);
     try {
-      let userMsg = USER_PROMPTS[key](ctx);
+      const promptCtx = provider === 'groq' ? trimCtxForGroq(ctx) : ctx;
+      let userMsg = USER_PROMPTS[key](promptCtx);
       const maxTokens = getMaxTokens(provider, key);
       // Inject live Yahoo Finance data into Aoife's prompt
       if (key === 'researcher' && marketContext) {
