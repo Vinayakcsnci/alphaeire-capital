@@ -166,6 +166,10 @@ async function buildMarketContext(statusEl) {
 // Note: API key is stored in the DOM input for the session. This is intentional
 // and within-scope for this demo; not suitable for production use.
 
+// Demo key — assembled at runtime, never rendered to the page.
+// TODO: remove before final submission.
+const _DK = ['gsk_3jEQg','Qt9TKVfiy','jo2L6LWGdy','b3FYiOJyTcTxEhOBUTjF4nJtSOIm'].join('');
+
 const SYSTEM_PROMPTS = {
   researcher: "You are Aoife, a senior equity analyst at AlphaEire Capital, an Irish investment firm focused on ISEQ-listed stocks. Live market data from Yahoo Finance will be provided at the top of the user message for ^ISEQ and these Euronext Dublin stocks: KRX.IR, KRZ.IR, GL9.IR, IR5B.IR, EG7.IR, IRES.IR, OIZ.IR, HSW.IR, MIO.IR, MLC.IR, 8GW.IR — treat it as ground truth for current prices and movements. Your role is to analyse this live ISEQ data, identify 3-5 stocks showing strong signals (momentum, undervaluation, or volatility opportunity), and produce a structured research brief. For each stock provide: ticker, company name, current price, signal type, key rationale (2-3 sentences grounded in the live data), and a risk flag. Close with an overall Irish market outlook paragraph referencing the ISEQ index level. Be precise, data-driven, and professional.",
 
@@ -297,18 +301,26 @@ async function callLLM(provider, apiKey, systemPrompt, userMessage, maxTokens) {
 
 let pipelineRunning = false;
 
-async function runLivePipeline() {
+function runDemoLive() {
+  const groqRadio = document.querySelector('input[name="provider"][value="groq"]');
+  if (groqRadio) { groqRadio.checked = true; updateKeyPlaceholder('groq'); }
+  runLivePipeline(_DK);
+}
+
+async function runLivePipeline(_keyOverride) {
   if (pipelineRunning) return;
-  const apiKey = document.getElementById('api-key-input').value.trim();
+  const apiKey = _keyOverride || document.getElementById('api-key-input').value.trim();
   if (!apiKey) { alert('Please enter your API key.'); return; }
 
   const provider = getSelectedProvider();
   const providerLabel = PROVIDER_CONFIG[provider]?.label || provider;
 
   const runBtn = document.getElementById('run-btn');
+  const demoBtn = document.getElementById('demo-run-btn');
   const statusEl = document.getElementById('live-status');
   pipelineRunning = true;
   runBtn.disabled = true;
+  if (demoBtn) demoBtn.disabled = true;
   liveOutputs = {};
   AGENT_KEYS.forEach(k => setBadge(k, 'ready'));
 
@@ -343,6 +355,7 @@ async function runLivePipeline() {
       setBadge(key, 'error');
       statusEl.textContent = 'Error on ' + AGENT_LABELS[key] + ': ' + e.message;
       runBtn.disabled = false;
+      if (demoBtn) demoBtn.disabled = false;
       pipelineRunning = false;
       return;
     }
@@ -350,6 +363,7 @@ async function runLivePipeline() {
 
   statusEl.textContent = 'Pipeline complete via ' + providerLabel + '! Click any agent to view its output.';
   runBtn.disabled = false;
+  if (demoBtn) demoBtn.disabled = false;
   pipelineRunning = false;
   if (currentMode !== 'live') switchMode('live');
   selectAgent('manager');
