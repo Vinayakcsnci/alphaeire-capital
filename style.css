@@ -94,6 +94,7 @@ header {
 }
 #run-btn:hover { background: #2ea043; }
 #run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-or { font-size: 0.8rem; color: var(--muted); padding: 0 4px; }
 #demo-run-btn {
   padding: 9px 22px;
   background: #7c3aed;
