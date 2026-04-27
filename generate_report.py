@@ -138,22 +138,29 @@ add_para(doc, (
 # Agent 1
 set_heading(doc, 'Agent 1 — Aoife (Researcher)', 2)
 add_label_text(doc, 'Role', 'Senior Equity Analyst')
-add_label_text(doc, 'Produces', 'Structured research brief with 3–5 ISEQ stock picks, signal types, rationale, risk flags, and market outlook')
+add_label_text(doc, 'Produces', 'Structured research brief with 3–5 ISEQ stock picks grounded in live Yahoo Finance data: signal types, live-price rationale, risk flags, and market outlook')
+add_label_text(doc, 'Live Data', '^ISEQ, AIBG.I, BIRG.I, RYA.I, CRH.L, DCC.L, PTSB.I — fetched from Yahoo Finance before each pipeline run')
 
 add_para(doc, 'System Prompt:', bold=True)
 add_para(doc, (
     '"You are Aoife, a senior equity analyst at AlphaEire Capital, an Irish investment firm focused '
-    'on ISEQ-listed stocks. Your role is to analyse current Irish market conditions, identify 3-5 '
-    'stocks showing strong signals (momentum, undervaluation, or volatility opportunity), and produce '
-    'a structured research brief. For each stock provide: ticker, sector, current signal type, key '
-    'rationale (2-3 sentences), and a risk flag. Close with an overall Irish market outlook paragraph. '
-    'Be precise, data-informed, and professional. Use realistic ISEQ tickers such as CRH.L, BIRG.I, '
-    'AIB.I, RYA.I, KRZ.I, DCC.L."'
+    'on ISEQ-listed stocks. Live market data from Yahoo Finance will be provided at the top of the '
+    'user message — treat it as ground truth for current prices and movements. Your role is to analyse '
+    'this live ISEQ data, identify 3-5 stocks showing strong signals (momentum, undervaluation, or '
+    'volatility opportunity), and produce a structured research brief. For each stock provide: ticker, '
+    'sector, current price, signal type, key rationale (2-3 sentences grounded in the live data), and '
+    'a risk flag. Close with an overall Irish market outlook paragraph. Be precise, data-driven, and professional."'
 ), italic=True)
 add_para(doc, (
+    'Data pipeline: Before Aoife runs, the system fetches real-time prices, day ranges, and 52-week '
+    'ranges for 7 ISEQ symbols from the Yahoo Finance v8/chart API (browser) or the yfinance Python '
+    'library (pipeline.py). This data is prepended to her user message, grounding every stock pick '
+    'in current market reality rather than training-data estimates.'
+))
+add_para(doc, (
     'Personality: Analytically rigorous and evidence-first. Aoife speaks with the measured authority '
-    'of a senior CFA charterholder — structured output, no speculation, precise use of financial '
-    'terminology. Her output is the foundation the entire pipeline builds on.'
+    'of a senior CFA charterholder — structured output, no speculation, every claim referenced to '
+    'a live data point. Her output is the foundation the entire pipeline builds on.'
 ))
 
 doc.add_paragraph()
@@ -257,10 +264,16 @@ section_divider(doc)
 set_heading(doc, '3. The Pipeline in Action', 1, GREEN)
 
 add_para(doc, (
-    'The pipeline runs sequentially: each agent\'s complete text output is injected directly into '
-    'the next agent\'s user message as structured context, delimited by labelled section headers '
-    '(e.g. --- RESEARCH BRIEF ---). This means every downstream agent has access to the full '
-    'upstream reasoning, not a summarised version of it.'
+    'Before the pipeline starts, live market data is fetched from Yahoo Finance for 7 ISEQ symbols '
+    '(^ISEQ All Share index, AIBG.I, BIRG.I, RYA.I, CRH.L, DCC.L, PTSB.I): current price, '
+    'day range, and 52-week range. This data is prepended to Aoife\'s user message so her stock '
+    'picks are grounded in current reality, not training-data estimates.'
+))
+add_para(doc, (
+    'Each agent\'s complete text output is then injected directly into the next agent\'s user '
+    'message as structured context, delimited by labelled section headers '
+    '(e.g. --- RESEARCH BRIEF ---). Every downstream agent has access to the full upstream '
+    'reasoning, not a summarised version of it.'
 ))
 
 set_heading(doc, 'Handoff Chain', 2)

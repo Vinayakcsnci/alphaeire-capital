@@ -97,12 +97,73 @@ function extractHtml(text) {
   return t;
 }
 
+// ─── YAHOO FINANCE LIVE DATA ─────────────────────────────────────────────────
+
+const ISEQ_SYMBOLS = ['^ISEQ', 'AIBG.I', 'BIRG.I', 'RYA.I', 'CRH.L', 'DCC.L', 'PTSB.I'];
+
+async function fetchYahooMeta(symbol) {
+  const enc = encodeURIComponent(symbol);
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${enc}?interval=1d&range=5d&includePrePost=false`;
+  const sources = [
+    url,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  ];
+  for (const src of sources) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 6000);
+      const r = await fetch(src, { signal: ctrl.signal });
+      clearTimeout(t);
+      if (!r.ok) continue;
+      const json = await r.json();
+      const meta = json?.chart?.result?.[0]?.meta;
+      if (meta?.regularMarketPrice) return meta;
+    } catch (_) {}
+  }
+  return null;
+}
+
+function f2(n) { return n != null ? Number(n).toFixed(2) : 'N/A'; }
+function fPct(n) { if (n == null) return 'N/A'; return (n >= 0 ? '+' : '') + Number(n).toFixed(2) + '%'; }
+
+async function buildMarketContext(statusEl) {
+  if (statusEl) statusEl.textContent = 'Fetching live ISEQ data from Yahoo Finance…';
+  const date = new Date().toLocaleDateString('en-IE', { day: '2-digit', month: 'short', year: 'numeric' });
+  const lines = [`LIVE MARKET DATA — Yahoo Finance — ${date}`, ''];
+  let fetched = 0;
+
+  for (const sym of ISEQ_SYMBOLS) {
+    const m = await fetchYahooMeta(sym);
+    if (!m) { lines.push(`${sym}: data unavailable`, ''); continue; }
+    const price = m.regularMarketPrice;
+    const prev  = m.chartPreviousClose || m.previousClose;
+    const chgPct = prev ? ((price - prev) / prev * 100) : null;
+    if (sym === '^ISEQ') {
+      lines.push(`ISEQ All Share (^ISEQ): ${f2(price)}  (${fPct(chgPct)} today)`);
+      lines.push(`  Day range : ${f2(m.regularMarketDayLow)} – ${f2(m.regularMarketDayHigh)}`);
+      lines.push(`  52-week   : ${f2(m.fiftyTwoWeekLow)} – ${f2(m.fiftyTwoWeekHigh)}`);
+    } else {
+      const name = m.shortName || sym;
+      const ccy  = m.currency || 'EUR';
+      lines.push(`${name} (${sym}): ${ccy} ${f2(price)}  ${fPct(chgPct)}`);
+      lines.push(`  Day: ${f2(m.regularMarketDayLow)} – ${f2(m.regularMarketDayHigh)}  |  52w: ${f2(m.fiftyTwoWeekLow)} – ${f2(m.fiftyTwoWeekHigh)}`);
+    }
+    lines.push('');
+    fetched++;
+  }
+
+  if (fetched === 0) {
+    return '(Live market data unavailable — base analysis on current market knowledge.)';
+  }
+  return lines.join('\n').trim();
+}
+
 // ─── LIVE MODE ───────────────────────────────────────────────────────────────
 // Note: API key is stored in the DOM input for the session. This is intentional
 // and within-scope for this demo; not suitable for production use.
 
 const SYSTEM_PROMPTS = {
-  researcher: "You are Aoife, a senior equity analyst at AlphaEire Capital, an Irish investment firm focused on ISEQ-listed stocks. Your role is to analyse current Irish market conditions, identify 3-5 stocks showing strong signals (momentum, undervaluation, or volatility opportunity), and produce a structured research brief. For each stock provide: ticker, sector, current signal type, key rationale (2-3 sentences), and a risk flag. Close with an overall Irish market outlook paragraph. Be precise, data-informed, and professional. Use realistic ISEQ tickers such as CRH.L, BIRG.I, AIB.I, RYA.I, KRZ.I, DCC.L.",
+  researcher: "You are Aoife, a senior equity analyst at AlphaEire Capital, an Irish investment firm focused on ISEQ-listed stocks. Live market data from Yahoo Finance will be provided at the top of the user message — treat it as ground truth for current prices and movements. Your role is to analyse this live ISEQ data, identify 3-5 stocks showing strong signals (momentum, undervaluation, or volatility opportunity), and produce a structured research brief. For each stock provide: ticker, sector, current price, signal type, key rationale (2-3 sentences grounded in the live data), and a risk flag. Close with an overall Irish market outlook paragraph. Be precise, data-driven, and professional.",
 
   designer: "You are Ciarán, a product designer at AlphaEire Capital. You have received a research brief from our equity analyst team. Design a stock monitoring dashboard and real-time alert system for our portfolio managers. Produce a detailed design specification covering: (1) dashboard layout and key UI components with exact descriptions, (2) alert trigger rules for each stock signal type identified in the research, (3) data visualisation choices (chart types, colour coding, thresholds), (4) UX rationale for every major decision. Format your output as a structured design specification document with clear headings.",
 
@@ -242,6 +303,14 @@ async function runLivePipeline() {
   liveOutputs = {};
   AGENT_KEYS.forEach(k => setBadge(k, 'ready'));
 
+  // Fetch live ISEQ data from Yahoo Finance before running Aoife
+  let marketContext = '';
+  try {
+    marketContext = await buildMarketContext(statusEl);
+  } catch (_) {
+    marketContext = '(Live market data unavailable — base analysis on current market knowledge.)';
+  }
+
   const ctx = {};
 
   for (const key of AGENT_KEYS) {
@@ -251,6 +320,10 @@ async function runLivePipeline() {
     try {
       const userMsg = USER_PROMPTS[key](ctx);
       const maxTokens = getMaxTokens(provider, key);
+      // Inject live Yahoo Finance data into Aoife's prompt
+      if (key === 'researcher' && marketContext) {
+        userMsg = marketContext + '\n\n---\n\n' + userMsg;
+      }
       let output = await callLLM(provider, apiKey, SYSTEM_PROMPTS[key], userMsg, maxTokens);
       if (key === 'maker') output = extractHtml(output);
       ctx[key] = output;
